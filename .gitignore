@@ -1,9 +1,8 @@
 .DS_Store
 node_modules
-/dist
-
 
 # local env files
+.env
 .env.local
 .env.*.local
 
@@ -22,7 +21,10 @@ pnpm-debug.log*
 *.sln
 *.sw?
 
-#Electron-builder output
-/dist_electron
-.env
 package-lock.json
+dist/electron/*
+dist/web/*
+build/*
+!build/icons
+thumbs.db
+!.gitkeep
