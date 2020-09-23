@@ -1,7 +1,10 @@
 // TODO: DANGER!!!
 process.env["ELECTRON_DISABLE_SECURITY_WARNINGS"] = "true";
 
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, ipcMain, Tray, Menu } from "electron";
+import path from "path";
+
+const PORT = 5050;
 
 ipcMain.on("invokeAction", function(event, data) {
   console.log("FFFFFFFFF");
@@ -16,39 +19,120 @@ if (process.env.NODE_ENV !== "development") {
     .replace(/\\/g, "\\\\");
 }
 
-let mainWindow;
+let mainWindow,
+  tray = null;
+
 const winURL = process.env.NODE_ENV === "development" ? `http://localhost:9080` : `file://${__dirname}/index.html`;
 
 function createWindow() {
-  /**
-   * Initial window options
-   */
   mainWindow = new BrowserWindow({
-    height: 563,
+    height: 600,
+    width: 1000,
+    minHeight: 563,
+    minWidth: 900,
     useContentSize: true,
-    width: 1000
+    autoHideMenuBar: true,
+    resizable: true,
+    show: false,
+    title: "ggg-015-44",
+    icon: __dirname + "/tree.png"
   });
 
   mainWindow.loadURL(winURL);
 
+  mainWindow.webContents.once("did-finish-load", function() {
+    var http = require("http");
+    var server = http.createServer(function(req, res) {
+      console.log(req.url);
+      if (req.url == "/123") {
+        res.end(`ah, you send 123.`);
+      } else {
+        const remoteAddress = res.socket.remoteAddress;
+        const remotePort = res.socket.remotePort;
+        res.end(`Your IP address is ${remoteAddress} and your source port is ${remotePort}.`);
+      }
+    });
+    server.listen(PORT);
+    console.log("http://localhost:" + PORT);
+  });
+
+  // mainWindow.focus();
   mainWindow.on("closed", () => {
-    mainWindow = null;
+    console.log("===> CLOSED");
+    // mainWindow = null;
+    // mainWindow.hide();
+    // mainWindow.setSkipTaskbar(true);
+  });
+  mainWindow.on("close", (event) => {
+    event.preventDefault();
+    console.log("===> CLOSE !!!");
+    // mainWindow = null;
+    // mainWindow.hide();
+    // mainWindow.setSkipTaskbar(true);
+  });
+
+  mainWindow.on("minimize", function(event) {
+    console.log("===> minimize");
+    // if (tray) tray.destroy();
+    event.preventDefault();
+    mainWindow.setSkipTaskbar(true);
+    // mainWindow.hide();
+    // tray = createTray();
+  });
+
+  mainWindow.on("restore", function(event) {
+    console.log("===> restore");
+    mainWindow.show();
+    mainWindow.setSkipTaskbar(false);
+    // tray.destroy();
   });
 }
 
-app.on("ready", createWindow);
+app.on("ready", () => {
+  console.log("===> ready!");
+  createWindow();
+  tray = createTray();
+});
 
 app.on("window-all-closed", () => {
+  console.log("===> window-all-closed");
   if (process.platform !== "darwin") {
     app.quit();
   }
 });
 
 app.on("activate", () => {
+  console.log("===> activate: ", mainWindow);
   if (mainWindow === null) {
     createWindow();
   }
 });
+
+function createTray() {
+  let appIcon = new Tray(path.join(__dirname, "/tree.png"));
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: "Show",
+      click: function() {
+        mainWindow.show();
+      }
+    },
+    {
+      label: "Exit",
+      click: function() {
+        app.isQuiting = true;
+        app.quit();
+      }
+    }
+  ]);
+
+  appIcon.on("double-click", function(event) {
+    mainWindow.show();
+  });
+  appIcon.setToolTip("Tray Tutorial");
+  appIcon.setContextMenu(contextMenu);
+  return appIcon;
+}
 
 /**
  * Auto Updater
