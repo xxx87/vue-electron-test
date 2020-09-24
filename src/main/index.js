@@ -9,7 +9,7 @@ const PORT = 5050;
 const { spawn } = require("child_process");
 
 ipcMain.on("invokeAction", function(event, data) {
-  const ls = spawn("notepad");
+  const ls = spawn("C:\\Program Files\\Microsoft Office\\Office16\\EXCEL.EXE", [path.join(__dirname, "test.xlsx")]);
   console.log("ls pid: ", ls.pid);
   // const ls = spawn("ls", ["-la"]);
 
