@@ -1,13 +1,38 @@
 // TODO: DANGER!!!
 process.env["ELECTRON_DISABLE_SECURITY_WARNINGS"] = "true";
-
-import { app, BrowserWindow, ipcMain, Tray, Menu } from "electron";
+// const spawnObj = require("child_process").spawn;
+import { app, BrowserWindow, ipcMain, Tray, Menu, shell } from "electron";
 import path from "path";
 
 const PORT = 5050;
 
+const { spawn } = require("child_process");
+
 ipcMain.on("invokeAction", function(event, data) {
-  console.log("FFFFFFFFF");
+  const ls = spawn("notepad");
+  console.log("ls pid: ", ls.pid);
+  // const ls = spawn("ls", ["-la"]);
+
+  // ls.stdout.on("data", (data) => {
+  //   console.log(`stdout: ${data}`);
+  // });
+
+  // ls.stderr.on("data", (data) => {
+  //   console.log(`stderr: ${data}`);
+  // });
+
+  ls.on("error", (error) => {
+    console.log(`error: ${error.message}`);
+  });
+
+  ls.on("close", (code) => {
+    console.log(`child process exited with ls.pid:  ${ls.pid}`);
+  });
+
+  // console.log("FFFFFFFFF", __dirname);
+  // shell.openExternal("https://github.com");
+  // console.log(path.join(__dirname, "test.txt"));
+  // shell.openItem("E:\\Programming\\ELECTRON\\electro-vue\\src\\main\\test.txt");
 });
 /**
  * Set `__static` path to static files in production
@@ -64,8 +89,10 @@ function createWindow() {
     // mainWindow.setSkipTaskbar(true);
   });
   mainWindow.on("close", (event) => {
-    event.preventDefault();
     console.log("===> CLOSE !!!");
+    // event.preventDefault();
+    // exitApp();
+    // mainWindow.setSkipTaskbar(true);
     // mainWindow = null;
     // mainWindow.hide();
     // mainWindow.setSkipTaskbar(true);
@@ -94,7 +121,7 @@ app.on("ready", () => {
   tray = createTray();
 });
 
-app.on("window-all-closed", () => {
+app.on("window-all-closed", (event) => {
   console.log("===> window-all-closed");
   if (process.platform !== "darwin") {
     app.quit();
@@ -108,6 +135,16 @@ app.on("activate", () => {
   }
 });
 
+function exitApp(trayExit = false) {
+  if (trayExit) {
+    console.log("trayExit: ", trayExit);
+    // app.isQuiting = true;
+    // app.quit();
+  } else {
+    console.log("trayExit: ", trayExit);
+  }
+}
+
 function createTray() {
   let appIcon = new Tray(path.join(__dirname, "/tree.png"));
   const contextMenu = Menu.buildFromTemplate([
@@ -120,8 +157,9 @@ function createTray() {
     {
       label: "Exit",
       click: function() {
-        app.isQuiting = true;
-        app.quit();
+        exitApp(true);
+        // app.isQuiting = true;
+        // app.quit();
       }
     }
   ]);
